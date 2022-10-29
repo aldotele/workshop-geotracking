@@ -10,6 +10,7 @@ app.get('/api', (req, res) => {
     res.send('Hello World!!!')
 });
 
+// this is to print on server
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
