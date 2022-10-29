@@ -10,12 +10,17 @@ const io = require('socket.io')(http);
 const port = 3000;
 
 // Store Position
-let sockets = {}
+let sockets = {} // saves all the sockets I have
 
 // Socket.io
 io.on('connection', function(socket) {
+    // 
     console.log('Socket Connected ', socket.id);
     
+    // TODO: MISSING CODE FOR onPositionToServer
+    socket.on("positionToServer", function(data) {
+        console.log('positionToServer', data);
+    });
 
     //Whenever someone disconnects this piece of code executed
     socket.on('disconnect', function () {

@@ -20,6 +20,7 @@
     
     // Create map
     const map = new ol.Map({
+        // this is for which kind of map we want (with streets, etc.)
         layers: [
             new ol.layer.Tile({
                 source: new ol.source.OSM()
@@ -27,12 +28,16 @@
         ],
         target: 'map',
         view: new ol.View({
+            // where to puts the center of tje map (coordinates) and the zoom
+            // a function is used to convert the coordinates
             center: ol.proj.transform([9.18, 45.46], 'EPSG:4326', 'EPSG:3857'),
             zoom: 14
         })
     });
     
     // Create layer
+    // es. on layer I might add pins (features is empty, so nothing added on map)
+
     const layer = new ol.layer.Vector({
         source: new ol.source.Vector({
             features: []
@@ -45,27 +50,34 @@
             }),
         }),
     });
+    // to add the specified layer on the map
     map.addLayer(layer);
     
-    // Add marker function
+    // Add marker function (allows to add pins)
     const addMarker = (data) => {
         const { id, latitude, longitude } = data;
         const newPoint = new ol.Feature({
             geometry: new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude]))
         });
+        // adds point on the map
         layer.getSource().addFeature(newPoint);
     }
     
-    // Socket
+    // Socket: first thing to do is connect the socket
+    // create a new socket that points to ws and not http
+    // note that I cannot call this from browser that only uses http
     const socket = io("ws://localhost:3000");
     
     // Listen for new points
     socket.on('positionToClient', function (data) {
         console.log("Socket receive positionToClient: ", data);
         
-        layer.getSource().clear();
+        layer.getSource().clear();  // deletes all previous pins from map
+        // all pins get cleared from map, while the new pins are added to the Object
+        // then all pins all positioned again on the maps, with the new ones added
         points[data.id] = data;
         
+        // this actually adds pins
         Object.keys(points).forEach(key => {
             addMarker(points[key]);
         });
@@ -76,6 +88,7 @@
     socket.on('deleteToClient', function (data) {
         console.log("Socket receive deleteToClient: ", data);
         delete points[data.id];
+        // clears all points
         layer.getSource().clear();
         Object.keys(points).forEach(key => {
             addMarker(points[key]);
@@ -84,12 +97,16 @@
     
     // watch GPS position
     const activeWatchPosition = (user, id, offset) => {
+        // navigator is a global object of the browser
         if ("geolocation" in navigator) {
             console.log("Geolocalizzazione Disponibile!");
 
+            // this allows to keep track of the change of position
+            // without asking to locate yourself again
             navigator.geolocation.watchPosition((position) => {
                 const { latitude, longitude } = position.coords;
                 socket.emit('positionToServer', {
+                    // can add a console log to see it on the browser
                     latitude: latitude,
                     longitude: longitude
                 });
